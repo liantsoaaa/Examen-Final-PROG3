@@ -78,7 +78,7 @@ public class MembershipFeeRepository {
 
     private MembershipFee mapRow(ResultSet rs) throws SQLException {
         MembershipFee fee = new MembershipFee();
-        fee.setId(String.valueOf(rs.getLong("id")));
+        fee.setId(Integer.parseInt(String.valueOf(rs.getLong("id"))));
         fee.setLabel(rs.getString("label"));
         fee.setAmount(rs.getDouble("amount"));
         fee.setStatus(rs.getBoolean("is_active") ? ActivityStatus.ACTIVE : ActivityStatus.INACTIVE);
@@ -94,7 +94,7 @@ public class MembershipFeeRepository {
         }
 
         int year = rs.getInt("year");
-        if (year > 0) fee.setEligibleFrom(LocalDate.of(year, 1, 1));
+        if (year > 0) fee.setEligibleFrom(String.valueOf(LocalDate.of(year, 1, 1)));
 
         return fee;
     }

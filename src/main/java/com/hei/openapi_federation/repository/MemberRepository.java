@@ -209,4 +209,12 @@ public class MemberRepository {
             default                -> MemberOccupation.JUNIOR;
         };
     }
+
+    public void updateCollectivityId(Object id, String collectivityId) {
+
+    }
+
+    public Member save(Member member) {
+            return null;
+    }
 }

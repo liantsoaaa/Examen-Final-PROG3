@@ -1,6 +1,8 @@
 package com.hei.openapi_federation.entity;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 public class Member {
     private String firstName;
@@ -114,5 +116,16 @@ public class Member {
     }
 
     public void setId(String id) {
+    }
+
+    public void setReferees(List<Member> referees) {
+    }
+
+    public Object getId() {
+             return null;
+    }
+
+    public Instant getMembershipDate() {
+            return null;
     }
 }

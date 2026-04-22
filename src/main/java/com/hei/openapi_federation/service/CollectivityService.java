@@ -2,15 +2,16 @@ package com.hei.openapi_federation.service;
 
 import com.hei.openapi_federation.entity.*;
 import com.hei.openapi_federation.exception.BadRequestException;
-import com.hei.openapi_federation.exception.ConflictException;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.CollectivityRepository.CollectivityRow;
 import com.hei.openapi_federation.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 
 @Service
@@ -23,11 +24,10 @@ public class CollectivityService {
 
     private static final String PENDING_MARKER = "__PENDING__";
 
-    private final CollectivityRepository collectivityRepository;
-    private final MemberRepository memberRepository;
+    private CollectivityRepository collectivityRepository = null;
+    private MemberRepository memberRepository = null;
 
-    public CollectivityService(CollectivityRepository collectivityRepository,
-                               MemberRepository memberRepository) {
+    public CollectivityService() {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
     }
@@ -119,7 +119,7 @@ public class CollectivityService {
 
         Long id = parseLongId(collectivityId);
         CollectivityRow row = collectivityRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(
+                .orElseThrow(() -> new BadRequestException(
                         "Collectivity not found: " + collectivityId));
 
 
@@ -132,28 +132,28 @@ public class CollectivityService {
 
 
         if (row.number != null && !row.number.startsWith(PENDING_MARKER)) {
-            throw new ConflictException(
+            throw new BadRequestException(
                     "This collectivity already has the number '%s' assigned. It cannot be changed."
                             .formatted(row.number));
         }
 
 
         if (row.name != null && !row.name.startsWith(PENDING_MARKER)) {
-            throw new ConflictException(
+            throw new BadRequestException(
                     "This collectivity already has the name '%s' assigned. It cannot be changed."
                             .formatted(row.name));
         }
 
 
         if (collectivityRepository.nameExistsForOther(request.getName(), id)) {
-            throw new ConflictException(
+            throw new BadRequestException(
                     "The name '%s' is already used by another collectivity."
                             .formatted(request.getName()));
         }
 
-        // Rule 6 — number must be unique across all other collectivities
+
         if (collectivityRepository.numberExistsForOther(request.getNumber(), id)) {
-            throw new ConflictException(
+            throw new BadRequestException(
                     "The number '%s' is already used by another collectivity."
                             .formatted(request.getNumber()));
         }
@@ -207,11 +207,17 @@ public class CollectivityService {
     private List<Member> resolveMembers(List<String> ids) {
         List<Member> members = memberRepository.findByIds(ids);
         if (members.size() != ids.size()) {
-            List<String> foundIds = members.stream().map(Member::getId).toList();
+            List<String> foundIds = new ArrayList<>();
+            Function<? super Member, ? extends String> mapper = (Function<? super Member, ? extends String>)
+                    member1 -> member1.getId().toString();
+            for (Member member : members) {
+                String string = mapper.apply(member);
+                foundIds.add(string);
+            }
             String missing = ids.stream()
                     .filter(id -> !foundIds.contains(id))
                     .reduce((a, b) -> a + ", " + b).orElse("unknown");
-            throw new NotFoundException("Member(s) not found: " + missing);
+            throw new BadRequestException("Member(s) not found: " + missing);
         }
         return members;
     }
@@ -221,8 +227,8 @@ public class CollectivityService {
                                        CreateCollectivityStructure createStructure,
                                        List<Member> allMembers,
                                        List<String> structureIds) {
-        Map<String, Member> memberMap = new java.util.HashMap<>();
-        for (Member m : allMembers) memberMap.put(m.getId(), m);
+        Map<String, Member> memberMap = new HashMap<>();
+        for (Member m : allMembers) memberMap.put((String) m.getId(), m);
 
         CollectivityStructure structure = new CollectivityStructure();
         structure.setPresident(memberMap.get(createStructure.getPresident()));
@@ -245,7 +251,7 @@ public class CollectivityService {
         try {
             return Long.parseLong(id);
         } catch (NumberFormatException e) {
-            throw new NotFoundException("Invalid collectivity id: " + id);
+            throw new BadRequestException("Invalid collectivity id: " + id);
         }
     }
 }

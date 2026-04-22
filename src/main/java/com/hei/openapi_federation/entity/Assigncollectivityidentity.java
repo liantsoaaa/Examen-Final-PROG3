@@ -1,7 +1,7 @@
 package com.hei.openapi_federation.entity;
 
 
-class AssignCollectivityIdentity {
+public class AssignCollectivityIdentity {
 
     private String number;
     private String name;

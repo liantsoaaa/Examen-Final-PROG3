@@ -33,4 +33,8 @@ public class Collectivity {
 
     public List<Member> getMembers() { return members; }
     public void setMembers(List<Member> members) { this.members = members; }
+
+    public void setFederationApproval(boolean federationApproval) {
+
+    }
 }

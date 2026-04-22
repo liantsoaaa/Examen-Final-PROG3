@@ -61,7 +61,7 @@ public class CreateMember {
         return profession;
     }
 
-    public String getPhoneNumber() {
+    public int getPhoneNumber() {
         return phoneNumber;
     }
 

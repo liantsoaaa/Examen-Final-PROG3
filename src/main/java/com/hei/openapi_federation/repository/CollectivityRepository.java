@@ -1,5 +1,6 @@
 package com.hei.openapi_federation.repository;
 
+import com.hei.openapi_federation.entity.Collectivity;
 import com.hei.openapi_federation.entity.Member;
 import org.springframework.stereotype.Repository;
 
@@ -243,6 +244,9 @@ public class CollectivityRepository {
         return members;
     }
 
+    public Collectivity save(Collectivity collectivity) {
+            return null;
+    }
 
 
     public static class CollectivityRow {
@@ -262,7 +266,7 @@ public class CollectivityRepository {
         m.setBirthDate(rs.getDate("birth_date").toLocalDate());
         m.setAddress(rs.getString("address"));
         m.setEmail(rs.getString("email"));
-        m.setPhoneNumber(rs.getString("phone"));
+        m.setPhoneNumber(Integer.parseInt(rs.getString("phone")));
         m.setProfession(rs.getString("job"));
         String g = rs.getString("gender");
         if (g != null) m.setGender(com.hei.openapi_federation.entity.Gender.valueOf(g));

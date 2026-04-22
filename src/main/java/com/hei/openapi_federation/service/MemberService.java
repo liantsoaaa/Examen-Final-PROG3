@@ -1,26 +1,25 @@
 package com.hei.openapi_federation.service;
 
-import com.openapi_federation.entity.CreateMember;
-import com.openapi_federation.entity.Member;
-import com.openapi_federation.entity.MemberOccupation;
-import com.openapi_federation.exception.BadRequestException;
-import com.openapi_federation.exception.NotFoundException;
-import com.openapi_federation.repository.MemberRepository;
-import com.openapi_federation.repository.SponsorshipRepository;
-import org.openapi_springframework.stereotype.Service;
+import com.hei.openapi_federation.entity.CreateMember;
+import com.hei.openapi_federation.entity.Member;
+import com.hei.openapi_federation.entity.MemberOccupation;
+import com.hei.openapi_federation.exception.BadRequestException;
+import com.hei.openapi_federation.repository.MemberRepository;
+import com.hei.openapi_federation.repository.SponsorshipRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Service
 public class MemberService {
 
-    private final MemberRepository memberRepository;
-    private final SponsorshipRepository sponsorshipRepository;
+    private MemberRepository memberRepository = null;
+    private SponsorshipRepository sponsorshipRepository = null;
 
-    public MemberService(MemberRepository memberRepository,
-                         SponsorshipRepository sponsorshipRepository) {
+    public MemberService() {
         this.memberRepository = memberRepository;
         this.sponsorshipRepository = sponsorshipRepository;
     }
@@ -56,7 +55,7 @@ public class MemberService {
             throw new BadRequestException("A target collectivity identifier is required.");
         }
         if (!memberRepository.collectivityExists(collectivityId)) {
-            throw new NotFoundException("Collectivity not found: " + collectivityId);
+            throw new BadRequestException("Collectivity not found: " + collectivityId);
         }
 
         List<Member> referees = resolveReferees(refereeIds);
@@ -82,7 +81,7 @@ public class MemberService {
                 request.getBirthDate(),
                 request.getGender().name(),
                 request.getAddress(),
-                request.getPhoneNumber(),
+                String.valueOf(request.getPhoneNumber()),
                 request.getEmail(),
                 request.getProfession()
         );
@@ -117,12 +116,18 @@ public class MemberService {
     private List<Member> resolveReferees(List<String> refereeIds) {
         List<Member> referees = memberRepository.findByIds(refereeIds);
         if (referees.size() != refereeIds.size()) {
-            List<String> foundIds = referees.stream().map(Member::getId).toList();
+            List<String> foundIds = new ArrayList<>();
+            Function<? super Member, ? extends String> mapper = (Function<? super Member, ? extends String>)
+                    member -> member.getId().toString();
+            for (Member referee : referees) {
+                String string = mapper.apply(referee);
+                foundIds.add(string);
+            }
             String missing = refereeIds.stream()
                     .filter(id -> !foundIds.contains(id))
                     .reduce((a, b) -> a + ", " + b)
                     .orElse("unknown");
-            throw new NotFoundException("Referee member(s) not found: " + missing);
+            throw new BadRequestException("Referee member(s) not found: " + missing);
         }
         return referees;
     }

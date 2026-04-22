@@ -4,5 +4,5 @@ public enum Frequency {
     WEEKLY,
     MONTHLY,
     ANNUALY,
-    PONCTUALLY
+    PUNCTUALLY, ANNUALLY, PONCTUALLY
 }
