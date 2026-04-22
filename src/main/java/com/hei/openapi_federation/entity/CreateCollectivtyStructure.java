@@ -1,6 +1,6 @@
 package com.hei.openapi_federation.entity;
 
-class CreateCollectivityStructure {
+public class CreateCollectivityStructure {
 
     private String president;
     private String vicePresident;

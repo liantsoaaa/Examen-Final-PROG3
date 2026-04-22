@@ -1,5 +1,7 @@
 package com.hei.openapi_federation.service;
 
+import com.hei.openapi_federation.entity.Frequency;
+
 import java.time.LocalDate;
 
 public class CreateMembershipFee {
@@ -7,7 +9,7 @@ public class CreateMembershipFee {
         return 0.0;
     }
 
-    public boolean getFrequency() {
+    public Frequency getFrequency() {
         return false;
     }
 

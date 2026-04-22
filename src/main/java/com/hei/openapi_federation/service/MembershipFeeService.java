@@ -42,7 +42,7 @@ public class MembershipFeeService {
                 throw new BadRequestException("Membership fee amount must be greater than 0.");
             }
 
-            if (null != req.getFrequency()) {
+            if (req.getFrequency() != null) {
                 Long feeId = membershipFeeRepository.insert(
                         id,
                         req.getLabel() != null ? req.getLabel() : String.valueOf(req.getFrequency()),

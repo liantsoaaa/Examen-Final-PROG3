@@ -7,6 +7,7 @@ import com.hei.openapi_federation.repository.CollectivityRepository.Collectivity
 import com.hei.openapi_federation.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -253,5 +254,13 @@ public class CollectivityService {
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid collectivity id: " + id);
         }
+    }
+
+    public Collectivity updateInformations(String id, CollectivityInformation request) {
+            return null;
+    }
+
+    public List<CollectivityTransaction> getTransactions(String id, LocalDate from, LocalDate to) {
+            return null;
     }
 }
