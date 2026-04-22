@@ -1,8 +1,6 @@
 package com.hei.openapi_federation.repository;
 
 import com.hei.openapi_federation.entity.Member;
-import com.hei.openapi_federation.entity.MemberCollectivity;
-import com.hei.openapi_federation.entity.MemberOccupation;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -23,6 +21,7 @@ public class CollectivityRepository {
     }
 
 
+
     public Optional<Long> findCityIdByName(String name) {
         String sql = "SELECT id FROM city WHERE LOWER(name) = LOWER(?)";
         try (Connection conn = dataSource.getConnection();
@@ -36,7 +35,6 @@ public class CollectivityRepository {
         }
         return Optional.empty();
     }
-
 
     public Long findOrCreateCity(String name) {
         return findCityIdByName(name).orElseGet(() -> {
@@ -54,7 +52,6 @@ public class CollectivityRepository {
         });
     }
 
-
     public Long getOrCreateFederationId() {
         String select = "SELECT id FROM federation LIMIT 1";
         try (Connection conn = dataSource.getConnection();
@@ -64,7 +61,6 @@ public class CollectivityRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Error fetching federation: " + e.getMessage(), e);
         }
-        // Create federation with default cotisation percentage
         String insert = "INSERT INTO federation (cotisation_percentage) VALUES (10.00) RETURNING id";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(insert);
@@ -75,7 +71,6 @@ public class CollectivityRepository {
         }
         throw new RuntimeException("Failed to get or create federation");
     }
-
 
     public Long insertCollectivity(String number, String name, String speciality,
                                    Long idFederation, Long idCity) {
@@ -104,7 +99,6 @@ public class CollectivityRepository {
         throw new RuntimeException("Failed to insert collectivity");
     }
 
-
     public void insertMemberCollectivity(Long idMember, Long idCollectivity, String postName) {
         String sql = """
                 INSERT INTO member_collectivity (id_member, id_collectivity, post_name, start_date)
@@ -122,7 +116,6 @@ public class CollectivityRepository {
         }
     }
 
-
     public int countMembersWithSeniorityInFederation(List<Long> memberIds, int months) {
         if (memberIds == null || memberIds.isEmpty()) return 0;
         String placeholders = memberIds.stream().map(id -> "?").reduce((a, b) -> a + "," + b).orElse("?");
@@ -134,9 +127,7 @@ public class CollectivityRepository {
                 """.formatted(placeholders, months);
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 0; i < memberIds.size(); i++) {
-                ps.setLong(i + 1, memberIds.get(i));
-            }
+            for (int i = 0; i < memberIds.size(); i++) ps.setLong(i + 1, memberIds.get(i));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }
@@ -146,19 +137,149 @@ public class CollectivityRepository {
         return 0;
     }
 
-
     public String generateCollectivityNumber() {
         String sql = "SELECT COUNT(*) FROM collectivity";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                long count = rs.getLong(1);
-                return "COL-%04d".formatted(count + 1);
-            }
+            if (rs.next()) return "COL-%04d".formatted(rs.getLong(1) + 1);
         } catch (SQLException e) {
             throw new RuntimeException("Error generating collectivity number: " + e.getMessage(), e);
         }
         return "COL-0001";
+    }
+
+
+    public Optional<CollectivityRow> findById(Long id) {
+        String sql = """
+                SELECT c.id, c.number, c.name, ci.name AS city_name
+                FROM collectivity c
+                JOIN city ci ON ci.id = c.id_city
+                WHERE c.id = ?
+                """;
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CollectivityRow row = new CollectivityRow();
+                    row.id       = rs.getLong("id");
+                    row.number   = rs.getString("number");
+                    row.name     = rs.getString("name");
+                    row.cityName = rs.getString("city_name");
+                    return Optional.of(row);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding collectivity by id: " + e.getMessage(), e);
+        }
+        return Optional.empty();
+    }
+
+
+    public boolean nameExistsForOther(String name, Long excludeId) {
+        String sql = "SELECT 1 FROM collectivity WHERE LOWER(name) = LOWER(?) AND id != ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setLong(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking name uniqueness: " + e.getMessage(), e);
+        }
+    }
+
+
+    public boolean numberExistsForOther(String number, Long excludeId) {
+        String sql = "SELECT 1 FROM collectivity WHERE LOWER(number) = LOWER(?) AND id != ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, number);
+            ps.setLong(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking number uniqueness: " + e.getMessage(), e);
+        }
+    }
+
+
+    public void updateNumberAndName(Long id, String number, String name) {
+        String sql = "UPDATE collectivity SET number = ?, name = ? WHERE id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, number);
+            ps.setString(2, name);
+            ps.setLong(3, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating collectivity number/name: " + e.getMessage(), e);
+        }
+    }
+
+
+    public List<Member> findMembersByCollectivityId(Long collectivityId) {
+        String sql = """
+                SELECT m.id, m.first_name, m.last_name, m.birth_date,
+                       m.address, m.email, m.phone, m.job, m.gender,
+                       mc.post_name
+                FROM member m
+                JOIN member_collectivity mc ON mc.id_member = m.id
+                WHERE mc.id_collectivity = ? AND mc.end_date IS NULL
+                """;
+        List<Member> members = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, collectivityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) members.add(mapMember(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching collectivity members: " + e.getMessage(), e);
+        }
+        return members;
+    }
+
+
+
+    public static class CollectivityRow {
+        public Long   id;
+        public String number;
+        public String name;
+        public String cityName;
+    }
+
+
+
+    private Member mapMember(ResultSet rs) throws SQLException {
+        Member m = new Member();
+        m.setId(String.valueOf(rs.getLong("id")));
+        m.setFirstName(rs.getString("first_name"));
+        m.setLastName(rs.getString("last_name"));
+        m.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        m.setAddress(rs.getString("address"));
+        m.setEmail(rs.getString("email"));
+        m.setPhoneNumber(rs.getString("phone"));
+        m.setProfession(rs.getString("job"));
+        String g = rs.getString("gender");
+        if (g != null) m.setGender(com.hei.openapi_federation.entity.Gender.valueOf(g));
+        String post = rs.getString("post_name");
+        if (post != null) m.setOccupation(dbPostToOccupation(post));
+        return m;
+    }
+
+    private com.hei.openapi_federation.entity.MemberOccupation dbPostToOccupation(String dbPost) {
+        return switch (dbPost) {
+            case "JUNIOR"           -> com.hei.openapi_federation.entity.MemberOccupation.JUNIOR;
+            case "CONFIRMED"        -> com.hei.openapi_federation.entity.MemberOccupation.SENIOR;
+            case "SECRETARY"        -> com.hei.openapi_federation.entity.MemberOccupation.SECRETARY;
+            case "TREASURER"        -> com.hei.openapi_federation.entity.MemberOccupation.TREASURER;
+            case "DEPUTY_PRESIDENT" -> com.hei.openapi_federation.entity.MemberOccupation.VICE_PRESIDENT;
+            case "PRESIDENT"        -> com.hei.openapi_federation.entity.MemberOccupation.PRESIDENT;
+            default                 -> com.hei.openapi_federation.entity.MemberOccupation.JUNIOR;
+        };
     }
 }

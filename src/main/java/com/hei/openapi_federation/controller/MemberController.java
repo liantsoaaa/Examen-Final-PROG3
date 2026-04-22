@@ -1,11 +1,11 @@
-package com.openapi_federation.controller;
+package com.hei.openapi_federation.controller;
 
-import com.openapi_federation.entity.CreateMember;
-import com.openapi_federation.entity.Member;
-import com.openapi_federation.service.MemberService;
-import org.openapi_springframework.http.HttpStatus;
-import org.openapi_springframework.http.ResponseEntity;
-import org.openapi_springframework.web.bind.annotation.*;
+import com.hei.openapi_federation.entity.CreateMember;
+import com.hei.openapi_federation.entity.Member;
+import com.hei.openapi_federation.service.MemberService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 

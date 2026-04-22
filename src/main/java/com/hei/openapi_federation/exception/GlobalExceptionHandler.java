@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,10 +24,18 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
     }
 
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(errorBody(HttpStatus.CONFLICT.value(), ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorBody(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred: " + ex.getMessage()));
+                .body(errorBody(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "An unexpected error occurred: " + ex.getMessage()));
     }
 
     private Map<String, Object> errorBody(int status, String message) {
