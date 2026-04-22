@@ -8,6 +8,8 @@ public class Collectivity {
     private CollectivityStructure structure;
     private List<String> members;
 
+    public Collectivity() {}
+
     public Collectivity(String id, String location, CollectivityStructure structure, List<String> members) {
         this.id = id;
         this.location = location;
