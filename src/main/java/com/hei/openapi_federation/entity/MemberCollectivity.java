@@ -10,7 +10,8 @@ public class MemberCollectivity {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    public MemberCollectivity() {}
+    public MemberCollectivity() {
+    }
 
     public MemberCollectivity(int id, int idMember, int idCollectivity, String postName, LocalDateTime startDate, LocalDateTime endDate) {
         this.id = id;
@@ -80,3 +81,5 @@ public class MemberCollectivity {
                 ", endDate=" + endDate +
                 '}';
 
+    }
+}

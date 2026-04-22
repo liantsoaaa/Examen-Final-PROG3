@@ -3,7 +3,6 @@ package com.hei.openapi_federation.service;
 import com.hei.openapi_federation.entity.*;
 import com.hei.openapi_federation.exception.BadRequestException;
 import com.hei.openapi_federation.exception.ConflictException;
-import com.hei.openapi_federation.exception.NotFoundException;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.CollectivityRepository.CollectivityRow;
 import com.hei.openapi_federation.repository.MemberRepository;

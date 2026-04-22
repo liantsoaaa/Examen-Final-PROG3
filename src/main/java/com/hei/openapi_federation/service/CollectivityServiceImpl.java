@@ -7,7 +7,6 @@ import com.hei.openapi_federation.entity.Collectivity;
 import com.hei.openapi_federation.entity.CollectivityStructure;
 import com.hei.openapi_federation.entity.Member;
 import com.hei.openapi_federation.exception.BadRequestException;
-import com.hei.openapi_federation.exception.NotFoundException;
 import com.hei.openapi_federation.mapper.CollectivityMapper;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.MemberRepository;

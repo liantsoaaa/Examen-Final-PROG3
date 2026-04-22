@@ -5,7 +5,6 @@ import com.hei.openapi_federation.dto.response.MemberDto;
 import com.hei.openapi_federation.entity.Member;
 import com.hei.openapi_federation.entity.MemberOccupation;
 import com.hei.openapi_federation.exception.BadRequestException;
-import com.hei.openapi_federation.exception.NotFoundException;
 import com.hei.openapi_federation.mapper.MemberMapper;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.MemberRepository;
