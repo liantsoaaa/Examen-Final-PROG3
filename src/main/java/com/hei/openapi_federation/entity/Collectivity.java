@@ -8,8 +8,6 @@ public class Collectivity {
     private CollectivityStructure structure;
     private List<String> members;
 
-    public Collectivity() {}
-
     public Collectivity(String id, String location, CollectivityStructure structure, List<String> members) {
         this.id = id;
         this.location = location;
@@ -50,12 +48,14 @@ public class Collectivity {
     }
 
     @Override
-    public String toString() {        return "Collectivity{" +
+    public String toString() {
+        return "Collectivity{" +
                 "id='" + id + '\'' +
                 ", location='" + location + '\'' +
                 ", structure=" + structure +
-                ", members=" + members + 
-                '}';    
+                ", members=" + members +
+                '}';
 
-    
+
+    }
 }

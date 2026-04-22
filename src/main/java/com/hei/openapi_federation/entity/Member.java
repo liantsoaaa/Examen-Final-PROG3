@@ -1,26 +1,20 @@
 package com.hei.openapi_federation.entity;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class Member {
-    private int id;
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
     private Gender gender;
-    private String adress;
+    private String adresse;
     private String profession;
-    private String phoneNumber;
+    private int phoneNumber;
     private String email;
     private MemberOccupation occupation;
-    private int collectivityId;
-    private List<Member> referees;
+    private String collectivityId;
 
-    public Member() {}
-
-    public Member(int id, String firstName, String lastName, LocalDate birthDate, Gender gender, String adresse, String profession, int phoneNumber, String email, MemberOccupation occupation, String collectivityId, List<Member> referees) {
-        this.id = id;
+    public Member() {
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
@@ -31,118 +25,94 @@ public class Member {
         this.email = email;
         this.occupation = occupation;
         this.collectivityId = collectivityId;
-        this.referees = referees;
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String getFirstName() {
         return firstName;
     }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
     public String getLastName() {
         return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public LocalDate getBirthDate() {
         return birthDate;
     }
 
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
     public Gender getGender() {
         return gender;
     }
 
-    public String getAdress() {
-        return adress;
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public String getAdresse() {
+        return adresse;
+    }
+
+    public void setAdresse(String adresse) {
+        this.adresse = adresse;
     }
 
     public String getProfession() {
         return profession;
     }
 
-    public int getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public MemberOccupation getOccupation() {
-        return occupation;
-    }
-
-    public String getCollectivityId() {
-        return collectivityId;
-    }
-
-    public List<Member> getReferees() {
-        return referees;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }   
-
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public void setGender  (Gender  gender) {
-        this.gender = gender;
-    }
-
-    public void setAdress(String adress) {
-        this.adress = adress;
-    }
-
     public void setProfession(String profession) {
         this.profession = profession;
+    }
+
+    public int getPhoneNumber() {
+        return phoneNumber;
     }
 
     public void setPhoneNumber(int phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public MemberOccupation getOccupation() {
+        return occupation;
     }
 
     public void setOccupation(MemberOccupation occupation) {
         this.occupation = occupation;
     }
 
+    public String getCollectivityId() {
+        return collectivityId;
+    }
+
     public void setCollectivityId(String collectivityId) {
         this.collectivityId = collectivityId;
     }
 
-    public void setReferees(List<Member> referees) {
-        this.referees = referees;
+    public void setAddress(String address) {
     }
 
-    @Override
-    public String toString() {
-        return "Member{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", birthDate=" + birthDate +
-                ", gender=" + gender +
-                ", adress='" + adress + '\'' +
-                ", profession='" + profession + '\'' +
-                ", phoneNumber=" + phoneNumber +
-                ", email='" + email + '\'' +
-                ", occupation=" + occupation +
-                ", collectivityId='" + collectivityId + '\'' +
-                '}';
+    public void setMembershipDate(LocalDate localDate) {
+    }
+
+    public void setId(String id) {
+    }
 }
