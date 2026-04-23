@@ -1,131 +1,54 @@
 package com.hei.openapi_federation.entity;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
 public class Member {
+
+    private String id;
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
     private Gender gender;
-    private String adresse;
+    private String address;
     private String profession;
-    private int phoneNumber;
+    private String phoneNumber;
     private String email;
     private MemberOccupation occupation;
-    private String collectivityId;
+    private List<Member> referees;
 
-    public Member() {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.birthDate = birthDate;
-        this.gender = gender;
-        this.adresse = adresse;
-        this.profession = profession;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
-        this.occupation = occupation;
-        this.collectivityId = collectivityId;
-    }
+    public Member() {}
 
-    public String getFirstName() {
-        return firstName;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    public String getLastName() {
-        return lastName;
-    }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) { this.gender = gender; }
 
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
-    public Gender getGender() {
-        return gender;
-    }
+    public String getProfession() { return profession; }
+    public void setProfession(String profession) { this.profession = profession; }
 
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public String getAdresse() {
-        return adresse;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setAdresse(String adresse) {
-        this.adresse = adresse;
-    }
+    public MemberOccupation getOccupation() { return occupation; }
+    public void setOccupation(MemberOccupation occupation) { this.occupation = occupation; }
 
-    public String getProfession() {
-        return profession;
-    }
-
-    public void setProfession(String profession) {
-        this.profession = profession;
-    }
-
-    public int getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(int phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public MemberOccupation getOccupation() {
-        return occupation;
-    }
-
-    public void setOccupation(MemberOccupation occupation) {
-        this.occupation = occupation;
-    }
-
-    public String getCollectivityId() {
-        return collectivityId;
-    }
-
-    public void setCollectivityId(String collectivityId) {
-        this.collectivityId = collectivityId;
-    }
-
-    public void setAddress(String address) {
-    }
-
-    public void setMembershipDate(LocalDate localDate) {
-    }
-
-    public void setId(String id) {
-    }
-
-    public void setReferees(List<Member> referees) {
-    }
-
-    public Object getId() {
-             return null;
-    }
-
-    public Instant getMembershipDate() {
-            return null;
-    }
+    public List<Member> getReferees() { return referees; }
+    public void setReferees(List<Member> referees) { this.referees = referees; }
 }

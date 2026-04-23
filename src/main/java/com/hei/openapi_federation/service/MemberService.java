@@ -105,7 +105,7 @@ public class MemberService {
         response.setGender(request.getGender());
         response.setAddress(request.getAddress());
         response.setProfession(request.getProfession());
-        response.setPhoneNumber(Integer.parseInt(String.valueOf(request.getPhoneNumber())));
+        response.setPhoneNumber(String.valueOf(Integer.parseInt(String.valueOf(request.getPhoneNumber()))));
         response.setEmail(request.getEmail());
         response.setOccupation(MemberOccupation.JUNIOR);
         response.setReferees(referees);

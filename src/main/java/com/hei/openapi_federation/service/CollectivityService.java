@@ -12,27 +12,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-
 
 @Service
 public class CollectivityService {
 
-    private static final int MIN_TOTAL_MEMBERS = 10;
+    private static final int MIN_TOTAL_MEMBERS  = 10;
     private static final int MIN_SENIOR_MEMBERS = 5;
-    private static final int SENIORITY_MONTHS = 6;
+    private static final int SENIORITY_MONTHS   = 6;
+    private static final String PENDING_MARKER  = "__PENDING__";
 
+    private final CollectivityRepository collectivityRepository;
+    private final MemberRepository memberRepository;
 
-    private static final String PENDING_MARKER = "__PENDING__";
-
-    private CollectivityRepository collectivityRepository = null;
-    private MemberRepository memberRepository = null;
-
-    public CollectivityService() {
+    public CollectivityService(CollectivityRepository collectivityRepository,
+                               MemberRepository memberRepository) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
     }
-
 
     public List<Collectivity> createAll(List<CreateCollectivity> requests) {
         List<Collectivity> results = new ArrayList<>();
@@ -48,10 +44,10 @@ public class CollectivityService {
 
         CreateCollectivityStructure structure = request.getStructure();
         if (structure == null
-                || structure.getPresident() == null
+                || structure.getPresident()     == null
                 || structure.getVicePresident() == null
-                || structure.getTreasurer() == null
-                || structure.getSecretary() == null) {
+                || structure.getTreasurer()     == null
+                || structure.getSecretary()     == null) {
             throw new BadRequestException(
                     "Collectivity structure is incomplete. President, vice-president, treasurer and secretary are all required.");
         }
@@ -65,7 +61,6 @@ public class CollectivityService {
         }
 
         List<Member> resolvedMembers = resolveMembers(allMemberIds);
-
         List<Long> memberLongIds = allMemberIds.stream().map(Long::parseLong).toList();
 
         int seniorCount = collectivityRepository.countMembersWithSeniorityInFederation(
@@ -78,7 +73,6 @@ public class CollectivityService {
 
         Long federationId = collectivityRepository.getOrCreateFederationId();
         Long cityId       = collectivityRepository.findOrCreateCity(request.getLocation());
-
 
         String tempNumber = PENDING_MARKER + System.currentTimeMillis();
         String tempName   = PENDING_MARKER + System.currentTimeMillis();
@@ -94,13 +88,13 @@ public class CollectivityService {
         );
 
         collectivityRepository.insertMemberCollectivity(
-                Long.parseLong(structure.getPresident()),    collectivityId, "PRESIDENT");
+                Long.parseLong(structure.getPresident()),     collectivityId, "PRESIDENT");
         collectivityRepository.insertMemberCollectivity(
-                Long.parseLong(structure.getVicePresident()), collectivityId, "DEPUTY_PRESIDENT");
+                Long.parseLong(structure.getVicePresident()), collectivityId, "VICE_PRESIDENT");
         collectivityRepository.insertMemberCollectivity(
-                Long.parseLong(structure.getTreasurer()),    collectivityId, "TREASURER");
+                Long.parseLong(structure.getTreasurer()),     collectivityId, "TREASURER");
         collectivityRepository.insertMemberCollectivity(
-                Long.parseLong(structure.getSecretary()),    collectivityId, "SECRETARY");
+                Long.parseLong(structure.getSecretary()),     collectivityId, "SECRETARY");
 
         for (String memberId : allMemberIds) {
             if (!structureIds.contains(memberId)) {
@@ -110,66 +104,33 @@ public class CollectivityService {
         }
 
         return buildResponse(String.valueOf(collectivityId), request.getLocation(),
-                null, null, structure, resolvedMembers, structureIds);
+                null, null, structure, resolvedMembers);
     }
 
-
-
-    public Collectivity assignIdentity(String collectivityId, AssignCollectivityIdentity request) {
-
-
+    public Collectivity updateInformations(String collectivityId, CollectivityInformation request) {
         Long id = parseLongId(collectivityId);
+
         CollectivityRow row = collectivityRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException(
-                        "Collectivity not found: " + collectivityId));
+                .orElseThrow(() -> new BadRequestException("Collectivity not found: " + collectivityId));
 
-
-        if (request.getNumber() == null || request.getNumber().isBlank()) {
-            throw new BadRequestException("Field 'number' is required.");
+        if (request.getName() != null && collectivityRepository.nameExistsForOther(request.getName(), id)) {
+            throw new BadRequestException("The name '%s' is already used by another collectivity.".formatted(request.getName()));
         }
-        if (request.getName() == null || request.getName().isBlank()) {
-            throw new BadRequestException("Field 'name' is required.");
+        if (request.getNumber() != null && collectivityRepository.numberExistsForOther(request.getNumber(), id)) {
+            throw new BadRequestException("The number '%s' is already used by another collectivity.".formatted(request.getNumber()));
         }
 
+        String newNumber = request.getNumber() != null ? request.getNumber() : row.number;
+        String newName   = request.getName()   != null ? request.getName()   : row.name;
 
-        if (row.number != null && !row.number.startsWith(PENDING_MARKER)) {
-            throw new BadRequestException(
-                    "This collectivity already has the number '%s' assigned. It cannot be changed."
-                            .formatted(row.number));
-        }
-
-
-        if (row.name != null && !row.name.startsWith(PENDING_MARKER)) {
-            throw new BadRequestException(
-                    "This collectivity already has the name '%s' assigned. It cannot be changed."
-                            .formatted(row.name));
-        }
-
-
-        if (collectivityRepository.nameExistsForOther(request.getName(), id)) {
-            throw new BadRequestException(
-                    "The name '%s' is already used by another collectivity."
-                            .formatted(request.getName()));
-        }
-
-
-        if (collectivityRepository.numberExistsForOther(request.getNumber(), id)) {
-            throw new BadRequestException(
-                    "The number '%s' is already used by another collectivity."
-                            .formatted(request.getNumber()));
-        }
-
-
-        collectivityRepository.updateNumberAndName(id, request.getNumber(), request.getName());
-
+        collectivityRepository.updateNumberAndName(id, newNumber, newName);
 
         List<Member> members = collectivityRepository.findMembersByCollectivityId(id);
 
-
-        Member president    = members.stream().filter(m -> m.getOccupation() == MemberOccupation.PRESIDENT).findFirst().orElse(null);
-        Member vicePresident= members.stream().filter(m -> m.getOccupation() == MemberOccupation.VICE_PRESIDENT).findFirst().orElse(null);
-        Member treasurer    = members.stream().filter(m -> m.getOccupation() == MemberOccupation.TREASURER).findFirst().orElse(null);
-        Member secretary    = members.stream().filter(m -> m.getOccupation() == MemberOccupation.SECRETARY).findFirst().orElse(null);
+        Member president     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.PRESIDENT).findFirst().orElse(null);
+        Member vicePresident = members.stream().filter(m -> m.getOccupation() == MemberOccupation.VICE_PRESIDENT).findFirst().orElse(null);
+        Member treasurer     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.TREASURER).findFirst().orElse(null);
+        Member secretary     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.SECRETARY).findFirst().orElse(null);
 
         CollectivityStructure structure = new CollectivityStructure();
         structure.setPresident(president);
@@ -179,16 +140,22 @@ public class CollectivityService {
 
         Collectivity response = new Collectivity();
         response.setId(collectivityId);
-        response.setNumber(request.getNumber());
-        response.setName(request.getName());
+        response.setNumber(newNumber.startsWith(PENDING_MARKER) ? null : newNumber);
+        response.setName(newName.startsWith(PENDING_MARKER)     ? null : newName);
         response.setLocation(row.cityName);
         response.setStructure(structure);
         response.setMembers(members);
-
         return response;
     }
 
-
+    public List<CollectivityTransaction> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
+        Long id = parseLongId(collectivityId);
+        collectivityRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("Collectivity not found: " + collectivityId));
+        if (from == null || to == null) throw new BadRequestException("Query parameters 'from' and 'to' are both required.");
+        if (from.isAfter(to)) throw new BadRequestException("'from' date must be before or equal to 'to' date.");
+        return List.of();
+    }
 
     private List<String> buildAllMemberIds(CreateCollectivity request) {
         List<String> ids = new ArrayList<>();
@@ -208,13 +175,7 @@ public class CollectivityService {
     private List<Member> resolveMembers(List<String> ids) {
         List<Member> members = memberRepository.findByIds(ids);
         if (members.size() != ids.size()) {
-            List<String> foundIds = new ArrayList<>();
-            Function<? super Member, ? extends String> mapper = (Function<? super Member, ? extends String>)
-                    member1 -> member1.getId().toString();
-            for (Member member : members) {
-                String string = mapper.apply(member);
-                foundIds.add(string);
-            }
+            List<String> foundIds = members.stream().map(Member::getId).toList();
             String missing = ids.stream()
                     .filter(id -> !foundIds.contains(id))
                     .reduce((a, b) -> a + ", " + b).orElse("unknown");
@@ -226,8 +187,7 @@ public class CollectivityService {
     private Collectivity buildResponse(String collectivityId, String location,
                                        String number, String name,
                                        CreateCollectivityStructure createStructure,
-                                       List<Member> allMembers,
-                                       List<String> structureIds) {
+                                       List<Member> allMembers) {
         Map<String, Member> memberMap = new HashMap<>();
         for (Member m : allMembers) memberMap.put((String) m.getId(), m);
 
@@ -244,7 +204,6 @@ public class CollectivityService {
         collectivity.setLocation(location);
         collectivity.setStructure(structure);
         collectivity.setMembers(allMembers);
-
         return collectivity;
     }
 
@@ -254,13 +213,5 @@ public class CollectivityService {
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid collectivity id: " + id);
         }
-    }
-
-    public Collectivity updateInformations(String id, CollectivityInformation request) {
-            return null;
-    }
-
-    public List<CollectivityTransaction> getTransactions(String id, LocalDate from, LocalDate to) {
-            return null;
     }
 }

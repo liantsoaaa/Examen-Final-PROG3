@@ -266,7 +266,7 @@ public class CollectivityRepository {
         m.setBirthDate(rs.getDate("birth_date").toLocalDate());
         m.setAddress(rs.getString("address"));
         m.setEmail(rs.getString("email"));
-        m.setPhoneNumber(Integer.parseInt(rs.getString("phone")));
+        m.setPhoneNumber(String.valueOf(Integer.parseInt(rs.getString("phone"))));
         m.setProfession(rs.getString("job"));
         String g = rs.getString("gender");
         if (g != null) m.setGender(com.hei.openapi_federation.entity.Gender.valueOf(g));

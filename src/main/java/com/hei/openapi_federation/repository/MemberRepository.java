@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
 @Repository
 public class MemberRepository {
 
@@ -22,7 +21,6 @@ public class MemberRepository {
     public MemberRepository(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-
 
     public Optional<Member> findById(String id) {
         String sql = """
@@ -46,7 +44,6 @@ public class MemberRepository {
         }
         return Optional.empty();
     }
-
 
     public List<Member> findByIds(List<String> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
@@ -75,7 +72,6 @@ public class MemberRepository {
         return members;
     }
 
-
     public boolean collectivityExists(String collectivityId) {
         String sql = "SELECT 1 FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
@@ -88,7 +84,6 @@ public class MemberRepository {
             throw new RuntimeException("Error checking collectivity existence: " + e.getMessage(), e);
         }
     }
-
 
     public boolean isConfirmedMember(String memberId) {
         String sql = """
@@ -109,7 +104,6 @@ public class MemberRepository {
         }
     }
 
-
     public Optional<Long> getCurrentCollectivityId(String memberId) {
         String sql = """
                 SELECT id_collectivity FROM member_collectivity
@@ -128,7 +122,6 @@ public class MemberRepository {
         }
         return Optional.empty();
     }
-
 
     public Long insert(String firstName, String lastName, LocalDate birthDate,
                        String gender, String address, String phone,
@@ -159,7 +152,6 @@ public class MemberRepository {
         throw new RuntimeException("Failed to insert member");
     }
 
-
     public void insertAsJunior(Long memberId, Long collectivityId) {
         String sql = """
                 INSERT INTO member_collectivity (id_member, id_collectivity, post_name, start_date)
@@ -176,7 +168,6 @@ public class MemberRepository {
         }
     }
 
-
     private Member mapRow(ResultSet rs) throws SQLException {
         Member m = new Member();
         m.setId(String.valueOf(rs.getLong("id")));
@@ -185,7 +176,7 @@ public class MemberRepository {
         m.setBirthDate(rs.getDate("birth_date").toLocalDate());
         m.setAddress(rs.getString("address"));
         m.setEmail(rs.getString("email"));
-        m.setPhoneNumber(Integer.parseInt(rs.getString("phone")));
+        m.setPhoneNumber(rs.getString("phone"));
         m.setProfession(rs.getString("job"));
 
         String genderStr = rs.getString("gender");
@@ -197,24 +188,15 @@ public class MemberRepository {
         return m;
     }
 
-
     private MemberOccupation dbPostToOccupation(String dbPost) {
         return switch (dbPost) {
-            case "JUNIOR"          -> MemberOccupation.JUNIOR;
-            case "CONFIRMED"       -> MemberOccupation.SENIOR;
-            case "SECRETARY"       -> MemberOccupation.SECRETARY;
-            case "TREASURER"       -> MemberOccupation.TREASURER;
-            case "DEPUTY_PRESIDENT" -> MemberOccupation.VICE_PRESIDENT;
-            case "PRESIDENT"       -> MemberOccupation.PRESIDENT;
-            default                -> MemberOccupation.JUNIOR;
+            case "JUNIOR"         -> MemberOccupation.JUNIOR;
+            case "CONFIRMED"      -> MemberOccupation.SENIOR;
+            case "SECRETARY"      -> MemberOccupation.SECRETARY;
+            case "TREASURER"      -> MemberOccupation.TREASURER;
+            case "VICE_PRESIDENT" -> MemberOccupation.VICE_PRESIDENT;
+            case "PRESIDENT"      -> MemberOccupation.PRESIDENT;
+            default               -> MemberOccupation.JUNIOR;
         };
-    }
-
-    public void updateCollectivityId(Object id, String collectivityId) {
-
-    }
-
-    public Member save(Member member) {
-            return null;
     }
 }
