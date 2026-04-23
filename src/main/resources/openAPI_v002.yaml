@@ -77,6 +77,58 @@ paths:
             - The collectivity already has a name assigned and cannot be changed.
             - The provided name already exists in another collectivity.
 
+    get:
+      summary: Get a collectivity by id
+      description: |
+        Returns a collectivity with its members and structure.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Collectivity identifier
+          schema:
+            type: string
+      responses:
+        200:
+          description: Collectivity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        404:
+          description: Collectivity not found
+
+  '/collectivities/{id}/financialAccounts':
+    get:
+      summary: Get financial accounts of a collectivity at a given date
+      description: |
+        Returns all financial accounts with their balance at a specific date.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Collectivity identifier
+          schema:
+            type: string
+        - name: at
+          in: query
+          required: true
+          description: Date to retrieve balances
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: List of financial accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+        404:
+          description: Collectivity not found
+
   '/members':
     post:
       summary: Create list of members
@@ -171,10 +223,8 @@ components:
           type: string
         number:
           type: string
-          description: Unique number assigned by the federation. Null if not yet assigned.
         name:
           type: string
-          description: Unique name assigned by the federation. Null if not yet assigned.
         location:
           type: string
         structure:
@@ -237,6 +287,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member'
+
+    FinancialAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - CASH
+            - BANK
+            - MOBILE_MONEY
+        balance:
+          type: number
+          format: double
+        currency:
+          type: string
+          example: MGA
+        ownerName:
+          type: string
+        accountNumber:
+          type: string
+        provider:
+          type: string
 
     Gender:
       type: string
