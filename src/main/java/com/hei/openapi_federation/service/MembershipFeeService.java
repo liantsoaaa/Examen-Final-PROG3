@@ -1,6 +1,8 @@
 package com.hei.openapi_federation.service;
 
-import com.hei.openapi_federation.entity.*;
+import com.hei.openapi_federation.entity.ActivityStatus;
+import com.hei.openapi_federation.entity.MembershipFee;
+import com.hei.openapi_federation.entity.CreateMembershipFee;
 import com.hei.openapi_federation.exception.BadRequestException;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.MembershipFeeRepository;
@@ -9,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Service
 public class MembershipFeeService {
@@ -23,13 +24,11 @@ public class MembershipFeeService {
         this.collectivityRepository  = collectivityRepository;
     }
 
-
     public List<MembershipFee> getByCollectivity(String collectivityId) {
         Long id = parseId(collectivityId);
         assertCollectivityExists(id);
         return membershipFeeRepository.findByCollectivityId(id);
     }
-
 
     public List<MembershipFee> create(String collectivityId, List<CreateMembershipFee> requests) {
         Long id = parseId(collectivityId);
@@ -42,27 +41,26 @@ public class MembershipFeeService {
                 throw new BadRequestException("Membership fee amount must be greater than 0.");
             }
 
-            if (req.getFrequency() != null) {
-                Long feeId = membershipFeeRepository.insert(
-                        id,
-                        req.getLabel() != null ? req.getLabel() : String.valueOf(req.getFrequency()),
-                        String.valueOf(req.getFrequency()),
-                        req.getAmount(),
-                        req.getEligibleFrom()
-                );
-
-                MembershipFee fee = new MembershipFee();
-                fee.setId(Integer.parseInt(String.valueOf(feeId)));
-                fee.setLabel(req.getLabel());
-                fee.setFrequency(req.getFrequency());
-                fee.setAmount(req.getAmount());
-                fee.setEligibleFrom(String.valueOf(req.getEligibleFrom()));
-                fee.setStatus(ActivityStatus.ACTIVE);
-                results.add(fee);
-            } else {
+            if (req.getFrequency() == null) {
                 throw new BadRequestException("Unrecognized or missing frequency value.");
             }
 
+            Long feeId = membershipFeeRepository.insert(
+                    id,
+                    req.getLabel() != null ? req.getLabel() : req.getFrequency().name(),
+                    req.getFrequency().toDbFrequency(),
+                    req.getAmount(),
+                    req.getEligibleFrom()
+            );
+
+            MembershipFee fee = new MembershipFee();
+            fee.setId(String.valueOf(feeId));        // String pas Integer
+            fee.setLabel(req.getLabel());
+            fee.setFrequency(req.getFrequency());
+            fee.setAmount(req.getAmount());
+            fee.setEligibleFrom(req.getEligibleFrom()); // LocalDate pas String
+            fee.setStatus(ActivityStatus.ACTIVE);
+            results.add(fee);
         }
         return results;
     }

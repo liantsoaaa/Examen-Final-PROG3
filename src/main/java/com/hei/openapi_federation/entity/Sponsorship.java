@@ -10,7 +10,8 @@ public class Sponsorship {
     private String relationship;
     private LocalDateTime createdAt;
 
-    public Sponsorship() {}
+    public Sponsorship() {
+    }
 
     public Sponsorship(int id, int idCandidate, int idSponsor, int idCollectivity, String relationship, LocalDateTime createdAt) {
         this.id = id;
@@ -80,4 +81,5 @@ public class Sponsorship {
                 ", createdAt=" + createdAt +
                 '}';
 
+    }
 }
