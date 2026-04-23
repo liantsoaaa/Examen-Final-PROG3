@@ -214,4 +214,8 @@ public class CollectivityService {
             throw new BadRequestException("Invalid collectivity id: " + id);
         }
     }
+
+    public Collectivity getById(String id) {
+        return null;
+    }
 }
