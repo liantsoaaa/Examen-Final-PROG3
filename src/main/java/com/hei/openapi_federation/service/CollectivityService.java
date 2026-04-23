@@ -5,6 +5,8 @@ import com.hei.openapi_federation.exception.BadRequestException;
 import com.hei.openapi_federation.repository.CollectivityRepository;
 import com.hei.openapi_federation.repository.CollectivityRepository.CollectivityRow;
 import com.hei.openapi_federation.repository.MemberRepository;
+import com.hei.openapi_federation.repository.PaymentRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 @Service
 public class CollectivityService {
@@ -22,12 +25,15 @@ public class CollectivityService {
     private static final String PENDING_MARKER  = "__PENDING__";
 
     private final CollectivityRepository collectivityRepository;
-    private final MemberRepository memberRepository;
+    private final MemberRepository       memberRepository;
+    private final PaymentRepository      paymentRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
-                               MemberRepository memberRepository) {
+                               MemberRepository memberRepository,
+                               PaymentRepository paymentRepository) {
         this.collectivityRepository = collectivityRepository;
-        this.memberRepository = memberRepository;
+        this.memberRepository       = memberRepository;
+        this.paymentRepository      = paymentRepository;
     }
 
     public List<Collectivity> createAll(List<CreateCollectivity> requests) {
@@ -107,17 +113,58 @@ public class CollectivityService {
                 null, null, structure, resolvedMembers);
     }
 
-    public Collectivity updateInformations(String collectivityId, CollectivityInformation request) {
-        Long id = parseLongId(collectivityId);
+
+
+    public Collectivity getById(String collectivityId) {
+        Long id = parseId(collectivityId);
 
         CollectivityRow row = collectivityRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Collectivity not found: " + collectivityId));
+                .orElseThrow(() -> new BadRequestException(
+                        HttpStatus.NOT_FOUND, "Collectivity not found: " + collectivityId));
 
-        if (request.getName() != null && collectivityRepository.nameExistsForOther(request.getName(), id)) {
-            throw new BadRequestException("The name '%s' is already used by another collectivity.".formatted(request.getName()));
+        List<Member> members = collectivityRepository.findMembersByCollectivityId(id);
+
+        Member president     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.PRESIDENT).findFirst().orElse(null);
+        Member vicePresident = members.stream().filter(m -> m.getOccupation() == MemberOccupation.VICE_PRESIDENT).findFirst().orElse(null);
+        Member treasurer     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.TREASURER).findFirst().orElse(null);
+        Member secretary     = members.stream().filter(m -> m.getOccupation() == MemberOccupation.SECRETARY).findFirst().orElse(null);
+
+        CollectivityStructure structure = new CollectivityStructure();
+        structure.setPresident(president);
+        structure.setVicePresident(vicePresident);
+        structure.setTreasurer(treasurer);
+        structure.setSecretary(secretary);
+
+        Collectivity response = new Collectivity();
+        response.setId(collectivityId);
+        response.setNumber(row.number != null && !row.number.startsWith(PENDING_MARKER) ? row.number : null);
+        response.setName(row.name != null && !row.name.startsWith(PENDING_MARKER) ? row.name : null);
+        response.setLocation(row.cityName);
+        response.setStructure(structure);
+        response.setMembers(members);
+        return response;
+    }
+
+
+
+    public Collectivity updateInformations(String collectivityId, CollectivityInformation request) {
+        Long id = parseId(collectivityId);
+
+        CollectivityRow row = collectivityRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        HttpStatus.NOT_FOUND, "Collectivity not found: " + collectivityId));
+
+        if (request.getName() != null
+                && collectivityRepository.nameExistsForOther(request.getName(), id)) {
+            throw new BadRequestException(
+                    "The name '%s' is already used by another collectivity."
+                            .formatted(request.getName()));
         }
-        if (request.getNumber() != null && collectivityRepository.numberExistsForOther(request.getNumber(), id)) {
-            throw new BadRequestException("The number '%s' is already used by another collectivity.".formatted(request.getNumber()));
+        if (request.getNumber() != null
+                && collectivityRepository.numberExistsForOther(request.getNumber(), id)) {
+            throw new BadRequestException(
+                    "The number '%s' is already used by another collectivity."
+                            .formatted(request.getNumber()));
         }
 
         String newNumber = request.getNumber() != null ? request.getNumber() : row.number;
@@ -148,14 +195,27 @@ public class CollectivityService {
         return response;
     }
 
-    public List<CollectivityTransaction> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
-        Long id = parseLongId(collectivityId);
+
+
+    public List<CollectivityTransaction> getTransactions(String collectivityId,
+                                                         LocalDate from, LocalDate to) {
+        Long id = parseId(collectivityId);
+
         collectivityRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Collectivity not found: " + collectivityId));
-        if (from == null || to == null) throw new BadRequestException("Query parameters 'from' and 'to' are both required.");
-        if (from.isAfter(to)) throw new BadRequestException("'from' date must be before or equal to 'to' date.");
-        return List.of();
+                .orElseThrow(() -> new BadRequestException(
+                        HttpStatus.NOT_FOUND, "Collectivity not found: " + collectivityId));
+
+        if (from == null || to == null) {
+            throw new BadRequestException("Query parameters 'from' and 'to' are both required.");
+        }
+        if (from.isAfter(to)) {
+            throw new BadRequestException("'from' date must be before or equal to 'to' date.");
+        }
+
+        return paymentRepository.findTransactionsByCollectivityAndPeriod(id, from, to);
     }
+
+
 
     private List<String> buildAllMemberIds(CreateCollectivity request) {
         List<String> ids = new ArrayList<>();
@@ -179,7 +239,8 @@ public class CollectivityService {
             String missing = ids.stream()
                     .filter(id -> !foundIds.contains(id))
                     .reduce((a, b) -> a + ", " + b).orElse("unknown");
-            throw new BadRequestException("Member(s) not found: " + missing);
+            throw new BadRequestException(
+                    HttpStatus.NOT_FOUND, "Member(s) not found: " + missing);
         }
         return members;
     }
@@ -189,7 +250,7 @@ public class CollectivityService {
                                        CreateCollectivityStructure createStructure,
                                        List<Member> allMembers) {
         Map<String, Member> memberMap = new HashMap<>();
-        for (Member m : allMembers) memberMap.put((String) m.getId(), m);
+        for (Member m : allMembers) memberMap.put(m.getId(), m);
 
         CollectivityStructure structure = new CollectivityStructure();
         structure.setPresident(memberMap.get(createStructure.getPresident()));
@@ -207,15 +268,12 @@ public class CollectivityService {
         return collectivity;
     }
 
-    private Long parseLongId(String id) {
+    private Long parseId(String id) {
         try {
             return Long.parseLong(id);
         } catch (NumberFormatException e) {
-            throw new BadRequestException("Invalid collectivity id: " + id);
+            throw new BadRequestException(
+                    HttpStatus.NOT_FOUND, "Invalid collectivity id: " + id);
         }
-    }
-
-    public Collectivity getById(String id) {
-        return null;
     }
 }
